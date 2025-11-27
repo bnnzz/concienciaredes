@@ -1,0 +1,437 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ciberseguridad - Actividad de Difusión (Carrusel)</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Lato:wght@400;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <style>
+/* 1. SETUP & THEME */
+* { box-sizing: border-box; }
+
+body {
+  background-color: #111;
+  margin: 0;
+  min-height: 100vh;
+  font-family: 'Lato', sans-serif;
+  color: #e2e8f0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden; /* Ocultar scroll en modo carrusel */
+}
+
+/* Contenedor principal de slides */
+#presentation-area {
+    width: 100%;
+    height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+}
+
+/* Estilo Base de cada Slide */
+.slide-container {
+  display: none; /* Oculto por defecto */
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  
+  /* Dimensiones fijas para aspecto 16:9 */
+  width: 1280px;
+  height: 720px;
+  max-width: 95vw;
+  max-height: 95vh;
+  
+  background-color: #0f172a;
+  background-image: radial-gradient(circle at 10% 20%, rgba(34, 211, 238, 0.1) 0%, transparent 20%),
+                    radial-gradient(circle at 90% 80%, rgba(244, 114, 182, 0.05) 0%, transparent 20%);
+  border-radius: 12px;
+  border: 1px solid #334155;
+  box-shadow: 0 0 40px rgba(0, 0, 0, 0.5);
+  padding: 60px;
+  position: relative;
+  overflow: hidden;
+  animation: fadeIn 0.5s ease-in-out;
+}
+
+/* Clase para mostrar el slide activo */
+.slide-container.active {
+    display: flex;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: scale(0.98); }
+    to { opacity: 1; transform: scale(1); }
+}
+
+/* Decoración Tech */
+.slide-container::after {
+    content: '';
+    position: absolute;
+    bottom: 20px;
+    right: 20px;
+    width: 100px;
+    height: 4px;
+    background: repeating-linear-gradient(90deg, #22d3ee, #22d3ee 10px, transparent 10px, transparent 20px);
+    opacity: 0.5;
+}
+
+/* 2. TYPOGRAPHY */
+h1, h2, h3 {
+  color: #22d3ee;
+  font-family: 'Share Tech Mono', monospace;
+  font-weight: 400;
+  margin: 0;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+}
+
+h1 { font-size: 72px; line-height: 1.1; text-shadow: 0 0 10px rgba(34, 211, 238, 0.5); }
+.slide-title { font-size: 48px; margin-bottom: 40px; border-bottom: 2px solid #334155; padding-bottom: 15px; width: 100%; }
+h3 { font-size: 28px; color: #f472b6; margin-bottom: 15px; }
+
+p, li { font-size: 20px; line-height: 1.6; color: #cbd5e1; }
+.content-area { display: flex; flex-direction: column; flex-grow: 1; justify-content: center; width: 100%; }
+
+/* 3. LAYOUTS INTERNOS */
+.title-layout { text-align: center; z-index: 2; }
+.subtitle { font-size: 28px; color: #94a3b8; margin-top: 20px; font-family: 'Share Tech Mono'; }
+
+.two-column { display: grid; grid-template-columns: 1fr 1fr; gap: 60px; width: 100%; align-items: center; }
+.image-wrapper { border-radius: 8px; overflow: hidden; height: 400px; border: 1px solid #22d3ee; }
+.image-wrapper img { width: 100%; height: 100%; object-fit: cover; }
+
+.tiled-content { display: flex; gap: 30px; width: 100%; align-items: stretch; }
+.tile { flex: 1; background: rgba(30, 41, 59, 0.8); border: 1px solid #475569; border-radius: 8px; padding: 30px; text-align: center; }
+.tile .icon { font-size: 48px; color: #22d3ee; margin-bottom: 20px; }
+
+.comparison-container { display: grid; grid-template-columns: 1fr 1fr; gap: 40px; width: 100%; }
+.col-bad { background: rgba(239, 68, 68, 0.1); border: 1px solid #ef4444; padding: 30px; border-radius: 12px; }
+.col-good { background: rgba(34, 197, 94, 0.1); border: 1px solid #22c55e; padding: 30px; border-radius: 12px; }
+.col-bad h3 { color: #ef4444; text-align: center; }
+.col-good h3 { color: #22c55e; text-align: center; }
+.check-list ul { list-style: none; padding: 0; }
+.check-list li { margin-bottom: 15px; display: flex; align-items: center; gap: 10px; }
+
+.bleed-image-layout { display: none; /* Sobrescrito por flex cuando active */ }
+.bleed-image-layout.active { display: grid; grid-template-columns: 45% 55%; padding: 0; align-items: start; }
+.bleed-image-layout > .content-container { padding: 60px; display: flex; flex-direction: column; justify-content: center; height: 100%; }
+.bleed-image-layout > .image-container { height: 100%; width: 100%; }
+.bleed-image-side { height: 100%; width: 100%; object-fit: cover; max-height: 720px; border-left: 2px solid #22d3ee; }
+
+.bullet-list ul { list-style: none; padding: 0; }
+.bullet-list li { margin-bottom: 25px; padding-left: 40px; position: relative; }
+.bullet-list li i { position: absolute; left: 0; top: 5px; color: #22d3ee; }
+.bullet-list strong { color: #f472b6; font-family: 'Share Tech Mono'; font-size: 22px; }
+
+/* 4. CONTROLES DE NAVEGACIÓN */
+.controls {
+    position: fixed;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    gap: 20px;
+    z-index: 100;
+    background: rgba(15, 23, 42, 0.9);
+    padding: 10px 20px;
+    border-radius: 30px;
+    border: 1px solid #334155;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+}
+
+.btn {
+    background: transparent;
+    border: 1px solid #22d3ee;
+    color: #22d3ee;
+    padding: 10px 20px;
+    border-radius: 20px;
+    cursor: pointer;
+    font-family: 'Share Tech Mono';
+    font-size: 16px;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.btn:hover {
+    background: #22d3ee;
+    color: #0f172a;
+    box-shadow: 0 0 10px #22d3ee;
+}
+
+.btn:disabled {
+    border-color: #475569;
+    color: #475569;
+    cursor: not-allowed;
+    box-shadow: none;
+    background: transparent;
+}
+
+.slide-counter {
+    color: #94a3b8;
+    font-family: 'Share Tech Mono';
+    align-self: center;
+    font-size: 18px;
+}
+
+/* 5. MODO GALERÍA (Para Screenshots) */
+body.gallery-mode {
+    overflow-y: auto;
+    display: block;
+    padding: 40px;
+    background-color: #1e1e1e;
+}
+
+body.gallery-mode #presentation-area {
+    height: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 40px;
+}
+
+body.gallery-mode .slide-container {
+    display: flex !important; /* Forzar mostrar todos */
+    margin-bottom: 20px;
+    transform: none !important;
+    animation: none !important;
+}
+
+body.gallery-mode .bleed-image-layout {
+    display: grid !important;
+}
+
+body.gallery-mode .controls {
+    position: fixed;
+    top: 20px;
+    bottom: auto;
+}
+
+/* Responsive */
+@media (max-width: 1024px) {
+    .slide-container { transform: scale(0.8); }
+}
+@media (max-width: 768px) {
+    .slide-container { height: auto; padding: 30px; }
+    .two-column, .tiled-content, .comparison-container, .bleed-image-layout { grid-template-columns: 1fr; display: flex; flex-direction: column; }
+    .image-wrapper { height: 200px; width: 100%; }
+    .bleed-image-side { border-left: none; border-bottom: 2px solid #22d3ee; max-height: 300px; }
+    h1 { font-size: 40px; }
+    .slide-title { font-size: 32px; }
+}
+    </style>
+</head>
+<body>
+
+<div id="presentation-area">
+    <!-- Slide 1 -->
+    <div class="slide-container active" style="background-image: linear-gradient(rgba(15, 23, 42, 0.85), rgba(15, 23, 42, 0.9)), url('http://googleusercontent.com/image_collection/image_retrieval/8191325259315246804'); background-size: cover; background-position: center;">
+        <div class="title-layout">
+            <h1>Tu Vida Digital:<br>Manual de Supervivencia</h1>
+            <p class="subtitle">Riesgos, Mitos y Cómo Protegerte Realmente</p>
+            <div style="margin-top: 40px; border-top: 1px solid #22d3ee; display: inline-block; padding-top: 20px;">
+                <p style="font-size: 18px; color: #cbd5e1;">Material de Difusión - Ciberseguridad FCC</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Slide 2 -->
+    <div class="slide-container">
+        <h2 class="slide-title">La Paradoja de la Seguridad</h2>
+        <div class="content-area">
+            <div class="two-column">
+                <div>
+                    <p>Nuestra investigación revela un dato alarmante:</p>
+                    <br>
+                    <p>Aunque el <strong>58% de las personas</strong> revisa los enlaces en correos sospechosos por miedo al <em>Phishing</em>...</p>
+                    <br>
+                    <p style="color: #f472b6; font-size: 24px; border-left: 4px solid #f472b6; padding-left: 20px;">
+                        ...la gran mayoría reutiliza la misma contraseña para todo.
+                    </p>
+                    <br>
+                    <p>Es como ponerle 10 cerrojos a la puerta principal, pero dejar la ventana abierta.</p>
+                </div>
+                <div class="image-wrapper">
+                    <img src="../smartedu/imagenes/descarga1.png" alt="Smartphone security">
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Slide 3  holaaaaaaaa--> 
+    <div class="slide-container">
+        <h2 class="slide-title">3 Errores Frecuentes</h2>
+        <div class="content-area">
+            <div class="tiled-content">
+                <div class="tile">
+                    <div class="icon"><i class="fa-solid fa-key"></i></div>
+                    <h3>La Llave Maestra</h3>
+                    <p>Usar la misma contraseña para el banco y Facebook. Un solo hackeo expone todo.</p>
+                </div>
+                <div class="tile">
+                    <div class="icon"><i class="fa-solid fa-wifi"></i></div>
+                    <h3>El Router Olvidado</h3>
+                    <p>Nunca cambiar la contraseña de etiqueta del módem. Es una puerta abierta para vecinos curiosos.</p>
+                </div>
+                <div class="tile">
+                    <div class="icon"><i class="fa-solid fa-user-shield"></i></div>
+                    <h3>"El Técnico Sabe"</h3>
+                    <p>Delegar tu seguridad a terceros. Si no sabes configurar tu privacidad, no estás protegido.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Slide 4 -->
+    <div class="slide-container">
+        <h2 class="slide-title">¿De qué lado estás?</h2>
+        <div class="content-area">
+            <div class="comparison-container check-list">
+                <div class="col-bad">
+                    <h3><i class="fa-solid fa-triangle-exclamation"></i> Riesgo Alto</h3>
+                    <ul>
+                        <li><i class="fa-solid fa-xmark" style="color: #ef4444;"></i> Contraseñas como "123456".</li>
+                        <li><i class="fa-solid fa-xmark" style="color: #ef4444;"></i> Clic en "Ganaste un premio".</li>
+                        <li><i class="fa-solid fa-xmark" style="color: #ef4444;"></i> Banca en Wi-Fi público.</li>
+                    </ul>
+                </div>
+                <div class="col-good">
+                    <h3><i class="fa-solid fa-shield-halved"></i> Usuario Seguro</h3>
+                    <ul>
+                        <li><i class="fa-solid fa-check" style="color: #22c55e;"></i> Gestor de Contraseñas.</li>
+                        <li><i class="fa-solid fa-check" style="color: #22c55e;"></i> Verificar el remitente del email.</li>
+                        <li><i class="fa-solid fa-check" style="color: #22c55e;"></i> Usar datos móviles para el banco.</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Slide 5 -->
+    <div class="slide-container bleed-image-layout">
+        <div class="content-container">
+            <h2 class="slide-title">Dispositivos: La Puerta Trasera</h2>
+            <div class="content-area">
+                <h3>¿Cámaras de Seguridad o de Espionaje?</h3>
+                <p>Importa más la configuración que la calidad de video.</p>
+                <br>
+                <p><strong>El Riesgo:</strong> Una cámara con contraseña de fábrica es accesible para cualquier hacker principiante.</p>
+                <br>
+                <p style="color: #22d3ee;"><i class="fa-solid fa-arrow-right"></i> <strong>Solución:</strong> Cambia siempre las contraseñas por defecto.</p>
+            </div>
+        </div>
+        <div class="image-container">
+            <img class="bleed-image-side" src="../smartedu/imagenes/router.png" alt="Router">
+        </div>
+    </div>
+
+    <!-- Slide 6 -->
+    <div class="slide-container">
+        <h2 class="slide-title">3 Pasos para Blindarte</h2>
+        <div class="content-area">
+            <div class="two-column">
+                <div class="bullet-list">
+                    <ul>
+                        <li><i class="fa-solid fa-1"></i> <strong>Activa 2FA (Doble Factor)</strong><br>La medida más efectiva hoy en día.</li>
+                        <li><i class="fa-solid fa-2"></i> <strong>Desconfía por Defecto</strong><br>Verifica la dirección del remitente letra por letra.</li>
+                        <li><i class="fa-solid fa-3"></i> <strong>Configura tu Módem</strong><br>Cambia la contraseña de administrador hoy mismo.</li>
+                    </ul>
+                </div>
+                <div class="image-wrapper" style="border: none; box-shadow: none;">
+                    <img src="./imagenes/descarga.png" alt="Phishing Alert" style="object-fit: contain;">
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Slide 7 -->
+    <div class="slide-container">
+        <div class="title-layout">
+            <i class="fa-solid fa-fingerprint" style="font-size: 80px; color: #22d3ee; margin-bottom: 30px;"></i>
+            <h1>¿Listo para navegar seguro?</h1>
+            <p class="subtitle">La seguridad depende de tus hábitos, no solo de la tecnología.</p>
+            <br>
+            <h3 style="color: #fff;">¡Gracias!</h3>
+        </div>
+    </div>
+</div>
+
+<!-- Controls -->
+<div class="controls">
+    <button class="btn" id="prevBtn" onclick="changeSlide(-1)"><i class="fa-solid fa-chevron-left"></i> Anterior</button>
+    <span class="slide-counter" id="slideCounter">1 / 7</span>
+    <button class="btn" id="nextBtn" onclick="changeSlide(1)">Siguiente <i class="fa-solid fa-chevron-right"></i></button>
+    <div style="width: 1px; background: #334155; margin: 0 10px;"></div>
+    <button class="btn" onclick="toggleGalleryMode()"><i class="fa-solid fa-border-all"></i> Modo Galería</button>
+</div>
+
+<script>
+    let currentSlide = 0;
+    const slides = document.querySelectorAll('.slide-container');
+    const counter = document.getElementById('slideCounter');
+    const prevBtn = document.getElementById('prevBtn');
+    const nextBtn = document.getElementById('nextBtn');
+    const body = document.body;
+
+    function updateSlides() {
+        slides.forEach((slide, index) => {
+            slide.classList.remove('active');
+            if (index === currentSlide) {
+                slide.classList.add('active');
+            }
+        });
+        counter.innerText = `${currentSlide + 1} / ${slides.length}`;
+        
+        // Disable buttons at ends
+        prevBtn.disabled = currentSlide === 0;
+        nextBtn.disabled = currentSlide === slides.length - 1;
+    }
+
+    function changeSlide(direction) {
+        if (body.classList.contains('gallery-mode')) return; // Disable nav in gallery mode
+
+        const newIndex = currentSlide + direction;
+        if (newIndex >= 0 && newIndex < slides.length) {
+            currentSlide = newIndex;
+            updateSlides();
+        }
+    }
+
+    function toggleGalleryMode() {
+        body.classList.toggle('gallery-mode');
+        const isGallery = body.classList.contains('gallery-mode');
+        
+        // Hide nav buttons in gallery mode
+        prevBtn.style.display = isGallery ? 'none' : 'flex';
+        nextBtn.style.display = isGallery ? 'none' : 'flex';
+        counter.style.display = isGallery ? 'none' : 'block';
+        
+        if (!isGallery) {
+            updateSlides(); // Reset to current slide when exiting gallery mode
+        }
+    }
+
+    // Keyboard navigation
+    document.addEventListener('keydown', (e) => {
+        if (body.classList.contains('gallery-mode')) return;
+        
+        if (e.key === 'ArrowRight' || e.key === ' ') {
+            changeSlide(1);
+        } else if (e.key === 'ArrowLeft') {
+            changeSlide(-1);
+        }
+    });
+
+    // Init
+    updateSlides();
+</script>
+
+</body>
+</html>
